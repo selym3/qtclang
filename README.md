@@ -2,8 +2,8 @@
 
 Small PyQt GUI for C/C++ applications
 
-When loaded up, you are presented with all the C/C++ source files in a given directory. These can be compiled. 
-There is also the option to compile the program file (containing the main function) and to run this file.
+When loaded up, you are presented with all the C/C++ source files in a given directory. These can be compiled.
+There is also the option to compile the program file (containing the main function) and to run this file. Source files can be refreshed if they are added/removed while the program is open. The source,output, and program directories cannot be changed while qtclang is running yet.
 
 ## Instructions
 
@@ -19,6 +19,7 @@ There is also the option to compile the program file (containing the main functi
   * This is because if there are duplicate folder names in the absolute path, it is possible that the wrong one will be replaced with the output directory when generating output paths for all the source files.
 * run `python qtclang.py`
   * Requires PyQt5 and relies on `os.system(...)` calls
+  * Uses `pathlib` library, likely requires python 3.4
 
 ## What it looks like
 
