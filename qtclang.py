@@ -1,3 +1,4 @@
+#!/bin/python
 from PyQt5 import QtWidgets
 import os
 from pathlib import Path
