@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 ########################
 # QTCLANG FILE IO CODE #
