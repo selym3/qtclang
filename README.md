@@ -2,20 +2,27 @@
 
 Small PyQt GUI for C/C++ applications
 
-When loaded up, you are presented with all the C/C++ source files in a given directory. These can be compiled.
-There is also the option to compile the program file (containing the main function) and to run this file. Source files can be refreshed if they are added/removed while the program is open. The source,output, and program directories cannot be changed while qtclang is running yet.
+## Requirements
 
-## Instructions
+* Python >=3.4
+* PyQt5
 
-* wip
+## Setup
+
+Linux
+
+* `sudo ln -s /path/to/qtclang.py /usr/local/bin/qtclang`
+* `chmod +x /usr/local/bin/qtclang`
+* `qtclang`
 
 ## What it looks like
 
-![image](./imgs/qtclang.png)
+![image](./imgs/qtclang2.png)
 
 ## TODO
 
 * wip
+* explain comamnd line arguments
 * Add safe output file path generation from source path to allow for absolute paths
 * Add option to load up with flags and add config file option (that will be used if present)
 * Choose which source files you are compiling with (radio button option)
