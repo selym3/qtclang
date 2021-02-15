@@ -89,8 +89,8 @@ class ProjectManager:
         return self.program
 
     # get the command text for a source file given its path
-    def get_source_cmd(self, source_path):
-        return self.compiler + " -c " + source_path + " -o " + self.get_source_output(source_path)
+    def get_source_cmd(self, source_path, args):
+        return self.compiler + " -c " + source_path + " -o " + self.get_source_output(source_path) + " " + args
 
     # return a list of source commands
     def get_source_cmds(self):
@@ -166,21 +166,21 @@ class ProjectManager:
 
     # return a list of executables representing the compilation
     # of all the source files
-    def get_source_execs(self):
+    def get_source_execs(self, args=""):
         output = self.get_source_paths()
         output_execs = []
         for source_path in output:
-            output_execs.append(self.get_source_exec(source_path))
+            output_execs.append(self.get_source_exec(source_path, args))
 
         return output_execs
 
     # return an executable given a source path representing its compilation
-    def get_source_exec(self, source_path):
-        return ObjExecutable(self.get_source_cmd(source_path), self.exec_debug)
+    def get_source_exec(self, source_path, args):
+        return ObjExecutable(self.get_source_cmd(source_path, args), self.exec_debug)
 
     # get the output path of for the program file
-    def get_program_output(self):
-        return os.path.splitext(self.program)[0]
+    def get_program_output(self, args=""):
+        return os.path.splitext(self.program)[0] + " " + args
 
     # get the executable object for a program file, representing its compilation
     def get_program_exec(self):
@@ -199,75 +199,142 @@ class ProgramApp(QtWidgets.QWidget):
         super(ProgramApp, self).__init__()
         self.setFixedSize(width, height)
         self.manager = program_manager
-
-        self.layout = QtWidgets.QFormLayout()
-
-        # Refresh button
-        refresh_button = QtWidgets.QPushButton('Refresh Sources')
-        refresh_button.clicked.connect(lambda: self.__setup_sources())
-        # Flag text
-        self.flags_box = QtWidgets.QLineEdit()
-
-        self.layout.addRow(refresh_button, self.flags_box)
-
-        # Run button
-        run_button = QtWidgets.QPushButton('Run Program')
-        run_button.clicked.connect(lambda: CmdExecutable("./" + program_manager.get_program_output()).execute())
-
-        # compile all button
-        compile_all = QtWidgets.QPushButton('Compile All Sources')
-        compile_all.clicked.connect(lambda: Executables(program_manager.get_source_execs()).execute() )
-
-        self.layout.addRow(run_button, compile_all)
-
-        # Program title 
-        p_title = QtWidgets.QLabel(program_manager.program)
-        
-        # Program button
-        p_button = QtWidgets.QPushButton('Compile Program')
-        p_button.clicked.connect(
-            lambda: program_manager.get_program_exec_with_flags(self.__get_flags()).execute()
-        )
-
-        self.layout.addRow(p_title, p_button)
-
-        self.__setup_sources()
-
-        self.setLayout(self.layout)
         self.setWindowTitle("qtclang")
 
-    def __get_flags(self):
+        # Create root form layout
+        self.root = QtWidgets.QFormLayout()
+
+        # Assign all components
+        self.args_box = None
+        self.flags_box = None
+        self.src_flags_box = None
+
+        # Add all sub components
+        self.root.addRow(self.get_config_area())
+
+        # get the rows before the the source is added
+        self.rows_before = self.root.rowCount()
+        self.root.addRow(self.get_source_area())
+
+        # Add root layout to window
+        self.setLayout(self.root)
+
+    ###
+    # CONFIGURATION AREA CODE
+    ##
+
+    def get_config_area(self):
+        
+        options_box = QtWidgets.QGroupBox('Options')
+        layout = QtWidgets.QFormLayout()
+
+        scroll_area = QtWidgets.QScrollArea()
+        scroll_area.setWidget(options_box)
+        scroll_area.setWidgetResizable(True)
+
+        ### ADD BUTTONS HERE ###
+
+        self.args_box = QtWidgets.QLineEdit()
+        layout.addRow(
+            QtWidgets.QLabel('Program arguments: '),
+            self.args_box
+        )
+
+        self.flags_box = QtWidgets.QLineEdit()
+        layout.addRow(
+            QtWidgets.QLabel('Program compilation flags: '),
+            self.flags_box
+        )
+
+        self.src_flags_box = QtWidgets.QLineEdit()
+        layout.addRow(
+            QtWidgets.QLabel('Source file compilation flags: '),
+            self.src_flags_box
+        )
+
+        run_button = QtWidgets.QPushButton('Run Program')
+        run_button.clicked.connect(
+            lambda: CmdExecutable("./" + self.manager.get_program_output(self.get_args())).execute()
+        )
+        layout.addRow(run_button)
+
+        compile_button = QtWidgets.QPushButton('Compile Program')
+        compile_button.clicked.connect(
+            lambda: self.manager.get_program_exec_with_flags(self.get_flags()).execute()
+        )
+        layout.addRow(compile_button)
+
+        compile_all = QtWidgets.QPushButton('Compile All Sources')
+        compile_all.clicked.connect(
+            lambda: Executables(self.manager.get_source_execs(self.get_src_flags())).execute()
+        )
+        layout.addRow(compile_all)
+
+        refresh = QtWidgets.QPushButton('Refresh sources')
+        refresh.clicked.connect(
+            lambda: self.refresh_sources()
+        )
+        layout.addRow(refresh)
+
+        ########################
+
+        options_box.setLayout(layout)
+
+        return scroll_area
+
+    def get_args(self):
+        if self.args_box == None:
+            return ""
+
+        return self.args_box.text()
+
+    def get_src_flags(self):
+        if self.src_flags_box == None:
+            return ""
+
+        return self.src_flags_box.text()
+
+    def get_flags(self):
+        if self.flags_box == None:
+            return ""
+
         return self.flags_box.text()
 
-    def __setup_sources(self):
-        if self.layout.rowCount() == 4:
-            self.layout.removeRow(3)
+    ###
+    # SOURCE AREA CODE
+    ###
+
+    def get_source_area(self):
         
         source_box = QtWidgets.QGroupBox('Sources')
-        
-        source_box_layout = QtWidgets.QFormLayout()
+        layout = QtWidgets.QFormLayout()
 
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidget(source_box)
         scroll_area.setWidgetResizable(True)
 
-        source_box.setLayout(source_box_layout)
-
         for source in self.manager.get_source_paths():
-            self.__add(source_box_layout, source)
+            self.add_source(layout, source)
 
-        self.layout.addRow(scroll_area)
+        source_box.setLayout(layout)
 
-    def __add(self, layout, source):
+        return scroll_area
+
+    def add_source(self, layout, source):
         out = self.manager.get_source_output(source)
-        ex = self.manager.get_source_exec(source)
 
         title = QtWidgets.QLabel(source)
         button = QtWidgets.QPushButton('Compile Source (' + out + ')')
 
-        button.clicked.connect(lambda: ex.execute())
+        button.clicked.connect(lambda: self.manager.get_source_exec(source, self.get_src_flags()).execute())
 
         layout.addRow(title, button)
+
+    def refresh_sources(self):
+        if self.root.rowCount() == self.rows_before + 1:
+            self.root.removeRow(self.rows_before)
+
+        self.root.addRow(self.get_source_area())
 
 def main():
     import sys
@@ -290,7 +357,6 @@ def main():
 
     ex.show()
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()
