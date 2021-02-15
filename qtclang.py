@@ -219,10 +219,10 @@ class ProgramApp(QtWidgets.QWidget):
         # Create root form layout
         self.root = QtWidgets.QFormLayout()
 
-        # Assign all components
-        self.args_box = None
-        self.flags_box = None
-        self.src_flags_box = None
+        # Assign important components
+        self.args_box = QtWidgets.QLineEdit()
+        self.flags_box = QtWidgets.QLineEdit()
+        self.src_flags_box = QtWidgets.QLineEdit()
 
         # Add all sub components
         self.root.addRow(self.get_config_area())
@@ -249,19 +249,16 @@ class ProgramApp(QtWidgets.QWidget):
 
         ### ADD BUTTONS HERE ###
 
-        self.args_box = QtWidgets.QLineEdit()
         layout.addRow(
             QtWidgets.QLabel('Program arguments: '),
             self.args_box
         )
 
-        self.flags_box = QtWidgets.QLineEdit()
         layout.addRow(
             QtWidgets.QLabel('Program compilation flags: '),
             self.flags_box
         )
 
-        self.src_flags_box = QtWidgets.QLineEdit()
         layout.addRow(
             QtWidgets.QLabel('Source file compilation flags: '),
             self.src_flags_box
@@ -298,21 +295,12 @@ class ProgramApp(QtWidgets.QWidget):
         return scroll_area
 
     def get_args(self):
-        if self.args_box == None:
-            return ""
-
         return self.args_box.text()
 
     def get_src_flags(self):
-        if self.src_flags_box == None:
-            return ""
-
         return self.src_flags_box.text()
 
     def get_flags(self):
-        if self.flags_box == None:
-            return ""
-
         return self.flags_box.text()
 
     ###
