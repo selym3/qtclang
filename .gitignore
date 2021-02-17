@@ -1,0 +1,7 @@
+# For python modules
+__pycache__/
+
+# For testing,
+*.cpp
+*.o
+main
