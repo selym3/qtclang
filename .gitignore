@@ -1,7 +1,10 @@
 # For python modules
 __pycache__/
+.vscode
 
 # For testing,
 *.cpp
 *.o
 main
+
+*.qtclang

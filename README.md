@@ -22,8 +22,6 @@ Linux
 ## TODO
 
 * wip
-* figure out a way to use relative / absolute paths seamlessly
-* add a debug checkbox
 * explain comamnd line arguments
 * Add option to load up with flags and add config file option (that will be used if present)
 * Add search bar for source files
