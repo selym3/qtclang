@@ -45,7 +45,3 @@ class Executable:
     def output(self, text, debug):
         if debug:
             print(text)
-
-    def set_debug(self, new_debug):
-        self.debug = new_debug
-        return self

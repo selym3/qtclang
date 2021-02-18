@@ -122,6 +122,10 @@ class ProjectManager:
     def program_exc(self, args=""):
         return Executable.one(self.program_cmd(args))
 
+    ###############
+    # OUTPUT FILE #
+    ###############
+
     def run_cmd(self, args=""):
         # return self.program_out() + " " + args
         return "./" + os.path.relpath(self.program_out()) + " " + args

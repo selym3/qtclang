@@ -112,12 +112,7 @@ class ProgramApp(QtWidgets.QWidget):
 
     def all_sources(self):
         sources = self.manager.sources()
-
-        print(sources)
-    
         sources = (self.manager.source_cmd(source, self.get_src_flags()) for source in sources)
-
-        # print(sources)
 
         return Executable.many(sources)
 
