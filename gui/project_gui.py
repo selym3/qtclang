@@ -6,6 +6,10 @@
 
 from PyQt5 import QtWidgets
 
+import os
+
+from app.executable import Executable
+
 class ProgramApp(QtWidgets.QWidget):
 
     def __init__(self, program_manager, width, height):
@@ -64,19 +68,19 @@ class ProgramApp(QtWidgets.QWidget):
 
         run_button = QtWidgets.QPushButton('Run Program')
         run_button.clicked.connect(
-            lambda: CmdExecutable("./" + self.manager.get_program_output(self.get_args())).execute()
+            lambda: (self.manager.run_exc(self.get_args())).execute()
         )
         layout.addRow(run_button)
 
         compile_button = QtWidgets.QPushButton('Compile Program')
         compile_button.clicked.connect(
-            lambda: self.manager.get_program_exec_with_flags(self.get_flags()).execute()
+            lambda: (self.manager.program_exc(self.get_src_flags())).execute()
         )
         layout.addRow(compile_button)
 
         compile_all = QtWidgets.QPushButton('Compile All Sources')
         compile_all.clicked.connect(
-            lambda: Executables(self.manager.get_source_execs(self.get_src_flags())).execute()
+            lambda: (self.all_sources()).execute()
         )
         layout.addRow(compile_all)
 
@@ -86,11 +90,39 @@ class ProgramApp(QtWidgets.QWidget):
         )
         layout.addRow(refresh)
 
+        # test
+        # save_file = QtWidgets.QPushButton('Save File')
+        # save_file.clicked.connect(
+        #     lambda: self.testFile()
+        # )
+        # layout.addRow(save_file)
+
         ########################
 
         options_box.setLayout(layout)
 
         return scroll_area
+    
+    # def testFile(self):
+    #     options = QtWidgets.QFileDialog.Options()
+    #     options |= QtWidgets.QFileDialog.DontUseNativeDialog
+    #     fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"test -- open a file","","qtclang Files (*.qtclang)", options=options)
+    #     if fileName:
+    #         print(fileName)
+
+    def all_sources(self):
+        sources = self.manager.sources()
+
+        print(sources)
+    
+        sources = (self.manager.source_cmd(source, self.get_src_flags()) for source in sources)
+
+        # print(sources)
+
+        return Executable.many(sources)
+
+    def shorten(self, path):
+        return os.path.relpath(path)
 
     def get_args(self):
         return self.args_box.text()
@@ -114,7 +146,7 @@ class ProgramApp(QtWidgets.QWidget):
         scroll_area.setWidget(source_box)
         scroll_area.setWidgetResizable(True)
 
-        for source in self.manager.get_source_paths():
+        for source in self.manager.sources():
             self.add_source(layout, source)
 
         source_box.setLayout(layout)
@@ -122,12 +154,13 @@ class ProgramApp(QtWidgets.QWidget):
         return scroll_area
 
     def add_source(self, layout, source):
-        out = self.manager.get_source_output(source)
+        out = self.manager.source_out(source)
+        out = self.shorten(out)
 
-        title = QtWidgets.QLabel(source)
-        button = QtWidgets.QPushButton('Compile Source (' + out + ')')
+        title = QtWidgets.QLabel(self.shorten(source))
+        button = QtWidgets.QPushButton('Compile (' + out + ')')
 
-        button.clicked.connect(lambda: self.manager.get_source_exec(source, self.get_src_flags()).execute())
+        button.clicked.connect(lambda: self.manager.source_exc(source, self.get_src_flags()).execute() )
 
         layout.addRow(title, button)
 
