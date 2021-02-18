@@ -40,7 +40,7 @@ def main():
 
     parser.add_argument(
         '--in',
-        dest='in_file_type',
+        dest='infile',
         type=str,
         help='the file type to compile (default: .cpp)',
         default='.cpp'
@@ -48,6 +48,7 @@ def main():
 
     parser.add_argument(
         '--out',
+        dest='outfile',
         type=str,
         help='the file type to output (default: .o)',
         default='.o'
@@ -77,23 +78,37 @@ def main():
     args = parser.parse_args()
 
     manager = ProjectManager(
-        compiler=args.compiler,
-        extension_in=args.in_file_type,
-        extension_out=args.out,
-        source_dir=args.indir,
-        output_dir=args.outdir,
-        program_file_path=args.prog
+        compiler = args.compiler,
+
+        extension = ( args.infile, args.outfile ),
+        directory = ( args.indir, args.outdir ),
+        
+        program = args.prog
     )
 
     app = QtWidgets.QApplication(sys.argv)
+
     ex = ProgramApp(
         manager, 
-        width=args.width, 
-        height=args.height
+        width = args.width, 
+        height = args.height
     )
-
     ex.show()
+
     sys.exit(app.exec_())
 
+TESTING = False
+
+def test():
+    import os
+    print(os.getcwd())
+
+    # import sys
+    # from pathlib import Path
+    # print(Path(sys.argv[0]).resolve())
+
 if __name__ == '__main__':
-    main()
+    if not TESTING:
+        main()
+    else:
+        test()

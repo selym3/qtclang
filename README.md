@@ -22,8 +22,8 @@ Linux
 ## TODO
 
 * wip
+* figure out a way to use relative / absolute paths seamlessly
+* add a debug checkbox
 * explain comamnd line arguments
-* Add safe output file path generation from source path to allow for absolute paths
 * Add option to load up with flags and add config file option (that will be used if present)
-* Choose which source files you are compiling with (radio button option)
 * Add search bar for source files
