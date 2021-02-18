@@ -5,42 +5,47 @@ from pathlib import Path
 
 # Interface for executing commands
 class Executable:
-
-    def execute(self):
-        pass
-
-# An executable group 
-class Executables(Executable):
-    def __init__(self, executable_list):
-        self.executables = executable_list
     
-    def execute(self):
-        for execu in self.executables:
-            execu.execute()
+    ################
+    # CONSTRUCTORS #
+    ################
 
-# A simple class that takes in a string and executes it
-class CmdExecutable(Executable):
-    def __init__(self, command, debug=False):
-        self.command = command
-        self.debug = debug
+    def one(command):
+        return Executable([ command ])
 
-    def execute(self):
-        if self.debug:
-            print(self.command)
+    def many(commands):
+        return Executable(commands)
 
-        os.system(self.command)
+    #########
+    # CLASS #
+    #########
 
-# An executable specifically for creating object files
-class ObjExecutable(CmdExecutable):
-    def __init__(self, obj_file_compile_cmd, debug=False):
-        super().__init__(obj_file_compile_cmd, debug)
-        self.dir_to_create = os.path.dirname(
-            obj_file_compile_cmd.split(" ")[-1])
+    def __init__(self, commands):
+        self.commands = commands
+        self.prefix = ">"
 
-    def execute(self):
-        # if self.debug:
-            # print("Creating directory: " + self.dir_to_create)
+    def execute(self, debug=True):
 
-        Path(self.dir_to_create).mkdir(parents=True, exist_ok=True)
+        self.output(self.prefix * 16, debug)
+
+        for command in self.commands:
+            self.output(self.format(command), debug)
+
+            os.system(command)
         
-        super(ObjExecutable, self).execute()
+        self.output(self.prefix * 16, debug)
+
+    #################
+    # DEBUG OPTIONS #
+    #################
+
+    def format(self, text):
+        return self.prefix + " " + str(text)
+
+    def output(self, text, debug):
+        if debug:
+            print(text)
+
+    def set_debug(self, new_debug):
+        self.debug = new_debug
+        return self
