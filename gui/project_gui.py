@@ -25,6 +25,9 @@ class ProgramApp(QtWidgets.QWidget):
         self.args_box = QtWidgets.QLineEdit()
         self.flags_box = QtWidgets.QLineEdit()
         self.src_flags_box = QtWidgets.QLineEdit()
+        
+        self.output_button = QtWidgets.QCheckBox("Toggle Command Output")
+        self.output_button.setChecked(True)
 
         # Add all sub components
         self.root.addRow(self.get_config_area())
@@ -68,19 +71,19 @@ class ProgramApp(QtWidgets.QWidget):
 
         run_button = QtWidgets.QPushButton('Run Program')
         run_button.clicked.connect(
-            lambda: (self.manager.run_exc(self.get_args())).execute()
+            lambda: (self.manager.run_exc(self.get_args())).execute(self.should_output())
         )
         layout.addRow(run_button)
 
         compile_button = QtWidgets.QPushButton('Compile Program')
         compile_button.clicked.connect(
-            lambda: (self.manager.program_exc(self.get_src_flags())).execute()
+            lambda: (self.manager.program_exc(self.get_src_flags())).execute(self.should_output())
         )
         layout.addRow(compile_button)
 
         compile_all = QtWidgets.QPushButton('Compile All Sources')
         compile_all.clicked.connect(
-            lambda: (self.all_sources()).execute()
+            lambda: (self.all_sources()).execute(self.should_output())
         )
         layout.addRow(compile_all)
 
@@ -89,6 +92,11 @@ class ProgramApp(QtWidgets.QWidget):
             lambda: self.refresh_sources()
         )
         layout.addRow(refresh)
+
+        layout.addRow(
+            # QtWidgets.QLabel('Toggle debug mode: '),
+            self.output_button
+        )
 
         # test
         # save_file = QtWidgets.QPushButton('Save File')
@@ -116,8 +124,8 @@ class ProgramApp(QtWidgets.QWidget):
 
         return Executable.many(sources)
 
-    def shorten(self, path):
-        return os.path.relpath(path)
+    def should_output(self):
+        return self.output_button.isChecked()
 
     def get_args(self):
         return self.args_box.text()
@@ -150,12 +158,11 @@ class ProgramApp(QtWidgets.QWidget):
 
     def add_source(self, layout, source):
         out = self.manager.source_out(source)
-        out = self.shorten(out)
 
-        title = QtWidgets.QLabel(self.shorten(source))
+        title = QtWidgets.QLabel(source)
         button = QtWidgets.QPushButton('Compile (' + out + ')')
 
-        button.clicked.connect(lambda: self.manager.source_exc(source, self.get_src_flags()).execute() )
+        button.clicked.connect(lambda: self.manager.source_exc(source, self.get_src_flags()).execute(self.should_output()) )
 
         layout.addRow(title, button)
 

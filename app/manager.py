@@ -13,9 +13,6 @@ from .executable import Executable
 
 class ProjectManager:
     
-    def find_root():
-        return os.getcwd()
-
     # The paths have the most defined behavoir within a local directory
     # and you are running the python file within the directory
     def __init__(
@@ -25,11 +22,9 @@ class ProjectManager:
         extension, 
         directory, 
         
-        program,
-        root = find_root()
+        program
     ):
         self.compiler = compiler
-        self.root = root
 
         self.extension = extension
         self.directory = tuple(self.validate_path(path) for path in directory)
@@ -40,7 +35,7 @@ class ProjectManager:
 
     def validate_path(self, path):
         path = os.path.relpath(path)
-        path = os.path.join(self.root, path)
+
         return path
 
     # generic function to traverse a directory recursively
@@ -69,13 +64,19 @@ class ProjectManager:
 
     # creates an output path given a source file
     def source_out(self, source):
+        # i think converting it to an abs path first
+        # might be safer  
+        source = os.path.abspath(source)
+
         base = os.path.splitext(source)[0]
         base = base.replace(
-            os.path.join(self.root, self.directory[0]),
-            os.path.join(self.root, self.directory[1]),
+            os.path.abspath(self.directory[0]),
+            os.path.abspath(self.directory[1]),
             1 # <-- this is just so if u mess it up somehow
         )
         base += self.extension[1]
+
+        base = os.path.relpath(base)
 
         return base
 
