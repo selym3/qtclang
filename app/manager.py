@@ -85,7 +85,7 @@ class ProjectManager:
         out += self.compiler
         out += (" -c " + source) # <-- compile to object file
         out += (" -o " + self.source_out(source)) # <-- specify output 
-        out += (" " + args) # <-- add args
+        out += (" " + args + " ") # <-- add args
 
         return out
 
@@ -109,7 +109,7 @@ class ProjectManager:
             return "echo 'Unable to find program file!'"
 
         # add the compiler and the path to the program
-        cmd = self.compiler + " " + self.program + " " + args
+        cmd = self.compiler + " " + self.program + " " + args + " "
 
         # add the path to all the source files
         for source in self.sources():
@@ -129,7 +129,7 @@ class ProjectManager:
 
     def run_cmd(self, args=""):
         # return self.program_out() + " " + args
-        return "./" + os.path.relpath(self.program_out()) + " " + args
+        return "./" + os.path.relpath(self.program_out()) + " " + args + " "
 
     def run_exc(self, args=""):
         return Executable.one(self.run_cmd(args))
