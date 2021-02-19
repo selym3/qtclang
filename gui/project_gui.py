@@ -77,7 +77,7 @@ class ProgramApp(QtWidgets.QWidget):
 
         compile_button = QtWidgets.QPushButton('Compile Program')
         compile_button.clicked.connect(
-            lambda: (self.manager.program_exc(self.get_src_flags())).execute(self.should_output())
+            lambda: (self.manager.program_exc(self.get_flags())).execute(self.should_output())
         )
         layout.addRow(compile_button)
 
