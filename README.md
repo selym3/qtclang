@@ -22,6 +22,7 @@ Linux
 ## TODO
 
 * wip
+* create bin folder if it doesnt exist when compiling (i accidentally removed this)
 * be able to change more options from within the program
 * add a way to toggle certain flags like SFML and -g, -O3, etc.
 * change menu to be tabbed
