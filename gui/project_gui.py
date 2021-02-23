@@ -4,16 +4,21 @@
 
 # this code is less bad than the executable code
 
-from PyQt5 import QtWidgets
-
 import os
 
 from app.executable import Executable
+from app.file_manager import FileManager
+from PyQt5 import QtWidgets
+
 
 class ProgramApp(QtWidgets.QWidget):
 
     def __init__(self, program_manager, width, height):
         super(ProgramApp, self).__init__()
+
+        # TODO: make a command line option or selectable
+        self.fm = FileManager('./.qtclang')
+
         self.setFixedSize(width, height)
         self.manager = program_manager
         self.setWindowTitle("qtclang")
@@ -38,6 +43,9 @@ class ProgramApp(QtWidgets.QWidget):
 
         # Add root layout to window
         self.setLayout(self.root)
+
+        # Do final initialization here
+        self.load_options()
 
     ###
     # CONFIGURATION AREA CODE
@@ -98,6 +106,25 @@ class ProgramApp(QtWidgets.QWidget):
             self.output_button
         )
 
+        # add file io buttons
+
+        save_button = QtWidgets.QPushButton('Save Config')
+        save_button.clicked.connect(
+            lambda: self.save_options()
+        )
+
+        load_button = QtWidgets.QPushButton('Load Config')
+        load_button.clicked.connect(
+            lambda: self.load_options()
+        )
+
+        layout.addRow(
+            save_button
+        )
+        layout.addRow(
+            load_button
+        )
+
         # test
         # save_file = QtWidgets.QPushButton('Save File')
         # save_file.clicked.connect(
@@ -135,6 +162,35 @@ class ProgramApp(QtWidgets.QWidget):
 
     def get_flags(self):
         return self.flags_box.text()
+
+    def clean_option(self, opt):
+        return opt.replace('\n', '')
+
+    def get_options(self):
+        out = self.get_args(), self.get_flags(), self.get_src_flags(), self.should_output()
+
+        return out
+
+    def save_options(self):
+        self.fm.clear()
+        options = self.get_options()
+        self.fm.write(options, lines=True)
+    
+    def load_options(self):
+        new_options = self.fm.text()
+        old_options = self.get_options()
+
+        if new_options == None or len(new_options) < len(old_options):
+            print("Options file not found... Try saving first!")
+            return
+
+        new_options = [self.clean_option(option) for option in new_options]
+        
+        self.args_box.setText(new_options[0])
+        self.flags_box.setText(new_options[1])
+        self.src_flags_box.setText(new_options[2])
+        self.output_button.setChecked(new_options[3] == str(True))
+        
 
     ###
     # SOURCE AREA CODE

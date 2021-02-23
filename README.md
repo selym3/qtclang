@@ -22,6 +22,10 @@ Linux
 ## TODO
 
 * wip
+* be able to change more options from within the program
+* add a way to toggle certain flags like SFML and -g, -O3, etc.
+* change menu to be tabbed
+* improve file io for the `.qtclang` file
 * explain comamnd line arguments
 * Add option to load up with flags and add config file option (that will be used if present)
 * Add search bar for source files
