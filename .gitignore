@@ -2,9 +2,4 @@
 __pycache__/
 .vscode
 
-# For testing,
-*.cpp
-*.o
-main
-
-*.qtclang
+test/
