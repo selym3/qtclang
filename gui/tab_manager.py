@@ -19,5 +19,5 @@ class TabManager(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
-    def add_tab(self, name, widget):
-        self.tabs.addTab(widget, name)
+    def add_tab(self, tab):
+        self.tabs.addTab(tab, tab.name)
