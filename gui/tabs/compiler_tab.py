@@ -3,16 +3,24 @@ from PyQt5.QtCore import *
 
 class CompilerOptions:
 
+    def from_file(filepath):
+        # this doesnt give any good messages for incomplete files 
+        # or files too long
+
+        data = []
+        with open(filepath) as f:
+            line = None
+            while len(data) < 2 and line != '':
+                data += [ f.readline().strip() ]
+        
+        return CompilerOptions(*data)
+                
     def __init__(self, compiler, flags):
         self.compiler = compiler
         self.flags = flags
 
-    def compile_source(self, source):
-        pass
-        # return f'{str(self) -c {source} '
-
     def __str__(self):
-        return f'{self.compiler} {self.flags}'
+        return f"{self.compiler}\n{self.flags}"
 
 DEFAULT_OPTS = CompilerOptions(
     "clang++",
@@ -34,7 +42,6 @@ class CompilerTab(QScrollArea):
         # Initialize form
 
         self.load_options(DEFAULT_OPTS)
-        print(self.get_options())
 
         # Make root widget the focus of the scroll area
 
@@ -52,7 +59,7 @@ class CompilerTab(QScrollArea):
 
         # Compiler Saves
 
-        save_menu = QGroupBox("Save & Load")
+        save_menu = QGroupBox("Save / Load")
         save_menu.setLayout(self.create_save_menu())
         form.addRow(save_menu)
 
@@ -86,11 +93,52 @@ class CompilerTab(QScrollArea):
         
         form = QFormLayout()
 
-        save = QPushButton("Save")
-        save.clicked.connect(lambda: print("Saving..."))
+        load_file = QPushButton("Load Configuration")
+        load_file.clicked.connect(self.load_save_file)
+        form.addRow(load_file)
+
+        save = QPushButton("Save Configuration")
+        save.clicked.connect(self.save_config)
         form.addRow(save)
 
         return form
+
+    def load_save_file(self):
+        fname = QFileDialog().getOpenFileName(
+            self, 
+            'Select Configuration File', # <-- file dialog name 
+            '', # <-- directory to start file exploraton from
+            "qtclang configuration (*.qtclang)" # <-- filter
+        )
+        
+        if (fname is not None) and fname[0] != '':
+            print("Opening config file", fname)
+            opts = CompilerOptions.from_file(fname[0])
+            print(opts)
+
+            self.load_options(opts)
+        else:
+            print("Didn't find file")
+
+    def save_config(self):
+        fname = QFileDialog().getSaveFileName(
+            self,
+            'Choose a save file name',
+            '',
+            'qtclang configuration (*.qtclang)' 
+        )
+
+        print("Saving file", fname)
+        if (fname is not None) and fname[0] != '':
+            opts = self.get_options()
+            real_name = fname[0]
+            if not real_name.endswith('.qtclang'):
+                real_name += '.qtclang'
+
+            with open(real_name, 'w') as f:
+                f.write(str(opts))
+        else:
+            print("Didn't find file")
 
     def create_presets(self):
 
