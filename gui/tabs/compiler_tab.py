@@ -1,12 +1,22 @@
 from PyQt5.QtWidgets import * # QScrollArea, QGroupBox, QFormLayout, QLabel, QLineEdit, QPushButton
 from PyQt5.QtCore import *
 
-class CompilerOptions:
+class FileProtocol:
 
-    def from_file(filepath):
-        # this doesnt give any good messages for incomplete files 
-        # or files too long
+    def file_to_options(self, filepath):
+        raise NotImplementedError(f'Method to convert contents of file "{filepath}" into instance of class CompilerOptions not implemented')
 
+    def options_to_file(self, options):
+        raise NotImplementedError(f'Method to convert {repr(options)} into the contents of a file not implemented.')
+    
+    def write_options(self, filename, options):
+        with open(filename, 'w') as f:
+            new_contents = self.options_to_file(options)
+            f.write(new_contents)
+
+class SimpleFileProtocol(FileProtocol):
+
+    def file_to_options(self, filepath):
         data = []
         with open(filepath) as f:
             line = None
@@ -14,13 +24,21 @@ class CompilerOptions:
                 data += [ f.readline().strip() ]
         
         return CompilerOptions(*data)
-                
+
+    def options_to_file(self, options):
+        return f"{options.compiler}\n{options.flags}"
+
+class CompilerOptions:
+
     def __init__(self, compiler, flags):
         self.compiler = compiler
         self.flags = flags
 
     def __str__(self):
-        return f"{self.compiler}\n{self.flags}"
+        return f"{self.compiler}, {self.flags}"
+
+    def __repr__(self):
+        return f"CompilerOptions({self})"
 
 DEFAULT_OPTS = CompilerOptions(
     "clang++",
@@ -32,6 +50,10 @@ class CompilerTab(QScrollArea):
     def __init__(self, parent):
         super().__init__(parent)
         # self.parent = parent
+
+        # Initialize non-gui members
+
+        self.file_converter = SimpleFileProtocol()
 
         # Create root widget
 
@@ -104,24 +126,21 @@ class CompilerTab(QScrollArea):
         return form
 
     def load_save_file(self):
-        fname = QFileDialog().getOpenFileName(
+        fname, _ = QFileDialog().getOpenFileName(
             self, 
             'Select Configuration File', # <-- file dialog name 
             '', # <-- directory to start file exploraton from
             "qtclang configuration (*.qtclang)" # <-- filter
         )
         
-        if (fname is not None) and fname[0] != '':
-            print("Opening config file", fname)
-            opts = CompilerOptions.from_file(fname[0])
-            print(opts)
-
-            self.load_options(opts)
+        if fname != '':
+            options = self.file_converter.file_to_options(fname)
+            self.load_options(options)
         else:
-            print("Didn't find file")
+            print("Didn't find file to load")
 
     def save_config(self):
-        fname = QFileDialog().getSaveFileName(
+        fname, _ = QFileDialog().getSaveFileName(
             self,
             'Choose a save file name',
             '',
@@ -129,14 +148,11 @@ class CompilerTab(QScrollArea):
         )
 
         print("Saving file", fname)
-        if (fname is not None) and fname[0] != '':
-            opts = self.get_options()
-            real_name = fname[0]
-            if not real_name.endswith('.qtclang'):
-                real_name += '.qtclang'
+        if fname != '':
+            if not fname.endswith('.qtclang'):
+                fname += '.qtclang'
 
-            with open(real_name, 'w') as f:
-                f.write(str(opts))
+            self.file_converter.write_options(fname, self.get_options())
         else:
             print("Didn't find file")
 
