@@ -1,8 +1,49 @@
 from PyQt5.QtWidgets import * # QScrollArea, QGroupBox, QFormLayout, QLabel, QLineEdit, QPushButton
 from PyQt5.QtCore import *
 
-class FileProtocol:
+from .tab import Tab
+from .component import Component
 
+class CompilerOptions:
+
+    def __init__(self, compiler, flags):
+        self.compiler = compiler
+        self.flags = flags
+
+    def __str__(self):
+        return f"{self.compiler}, {self.flags}"
+
+    def __repr__(self):
+        return f"CompilerOptions({self})"
+
+DEFAULT_OPTS = CompilerOptions(
+    "clang++",
+    "-O3 -std=c++17 -pthread"
+)
+
+class OptionsEditor(Component):
+
+    def __init__(self):
+        super().__init__("Options")
+
+        self.compiler_input = QLineEdit()
+        self.addWidgets(QLabel("Compiler: "), self.compiler_input)
+
+        self.flags_input = QLineEdit()
+        self.addWidgets(QLabel("Flags: "), self.flags_input)
+
+    def load_options(self, options):
+        self.compiler_input.setText(options.compiler)
+        self.flags_input.setText(options.flags)
+    
+    def get_options(self): 
+        return CompilerOptions(
+            self.compiler_input.text(),
+            self.flags_input.text()
+        )
+
+class FileProtocol:
+    
     def file_to_options(self, filepath):
         raise NotImplementedError(f'Method to convert contents of file "{filepath}" into instance of class CompilerOptions not implemented')
 
@@ -28,102 +69,21 @@ class SimpleFileProtocol(FileProtocol):
     def options_to_file(self, options):
         return f"{options.compiler}\n{options.flags}"
 
-class CompilerOptions:
+class SaveMenu(Component):
 
-    def __init__(self, compiler, flags):
-        self.compiler = compiler
-        self.flags = flags
-
-    def __str__(self):
-        return f"{self.compiler}, {self.flags}"
-
-    def __repr__(self):
-        return f"CompilerOptions({self})"
-
-DEFAULT_OPTS = CompilerOptions(
-    "clang++",
-    "-O3 -std=c++17 -pthread"
-)
-
-class CompilerTab(QScrollArea):
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # self.parent = parent
-
-        # Initialize non-gui members
+    def __init__(self, editor):
+        super().__init__("Save / Load")
+        self.editor = editor
 
         self.file_converter = SimpleFileProtocol()
 
-        # Create root widget
-
-        self.root = QGroupBox()
-        self.form = self.create_root()
-        self.root.setLayout(self.form)
-
-        # Initialize form
-
-        self.load_options(DEFAULT_OPTS)
-
-        # Make root widget the focus of the scroll area
-
-        self.setWidget(self.root)
-        self.setWidgetResizable(True)
-
-    def create_root(self):
-        form = QFormLayout()
-
-        # Compiler Options
-
-        compiler_menu = QGroupBox("Options")
-        compiler_menu.setLayout(self.create_compiler_menu())
-        form.addRow(compiler_menu)
-
-        # Compiler Saves
-
-        save_menu = QGroupBox("Save / Load")
-        save_menu.setLayout(self.create_save_menu())
-        form.addRow(save_menu)
-
-        # Compiler Presets
-
-        presets = QGroupBox("Presets")
-        presets.setLayout(self.create_presets())
-        form.addRow(presets)
-    
-        return form
-
-    def create_compiler_menu(self):
-
-        form = QFormLayout()
-
-        self.compiler_input = QLineEdit()
-        form.addRow(
-            QLabel("Compiler: "),
-            self.compiler_input
-        )
-
-        self.flags_input = QLineEdit()
-        form.addRow(
-            QLabel("Flags: "),
-            self.flags_input
-        )
-
-        return form
-
-    def create_save_menu(self):
-        
-        form = QFormLayout()
-
         load_file = QPushButton("Load Configuration")
         load_file.clicked.connect(self.load_save_file)
-        form.addRow(load_file)
+        self.addWidgets(load_file)
 
-        save = QPushButton("Save Configuration")
-        save.clicked.connect(self.save_config)
-        form.addRow(save)
-
-        return form
+        save_file = QPushButton("Save Configuration")
+        save_file.clicked.connect(self.save_options)
+        self.addWidgets(save_file)
 
     def load_save_file(self):
         fname, _ = QFileDialog().getOpenFileName(
@@ -135,14 +95,14 @@ class CompilerTab(QScrollArea):
         
         if fname != '':
             options = self.file_converter.file_to_options(fname)
-            self.load_options(options)
+            self.editor.load_options(options)
         else:
             print("Didn't find file to load")
 
-    def save_config(self):
+    def save_options(self):
         fname, _ = QFileDialog().getSaveFileName(
             self,
-            'Choose a save file name',
+            'Select Configuration File',
             '',
             'qtclang configuration (*.qtclang)' 
         )
@@ -152,31 +112,35 @@ class CompilerTab(QScrollArea):
             if not fname.endswith('.qtclang'):
                 fname += '.qtclang'
 
-            self.file_converter.write_options(fname, self.get_options())
+            self.file_converter.write_options(fname, self.editor.get_options())
         else:
             print("Didn't find file")
 
-    def create_presets(self):
+class PresetSelector(Component):
 
-        form = QFormLayout()
+    def __init__(self, editor, presets):
+        super().__init__("Presets")
 
-        for i in range(3):    
-            default = QPushButton("Default")
-            default.clicked.connect(lambda: self.load_options(DEFAULT_OPTS))
-            form.addRow(default)
+        for name, compiler_opts in presets:
+            button = QPushButton(name)
+            button.clicked.connect(lambda: editor.load_options(compiler_opts))
 
-        return form
+            self.addWidgets(button)
 
-    def load_options(self, options):
+class CompilerTab(Tab):
 
-        self.compiler_input.setText(options.compiler)
-        self.flags_input.setText(options.flags)
+    def __init__(self, parent):
+        super().__init__(parent, "Compiler")
 
-    def get_options(self):
+        editor = OptionsEditor()
+        editor.load_options(DEFAULT_OPTS)
+        self.addComponent(editor)
 
-        out = CompilerOptions(
-            self.compiler_input.text(),
-            self.flags_input.text()
-        )
+        save_menu = SaveMenu(editor)
+        self.addComponent(save_menu)
 
-        return out
+        presets = [
+            ("Default", DEFAULT_OPTS),
+        ] * 3
+        preset_selector = PresetSelector(editor, presets)
+        self.addComponent(preset_selector)
