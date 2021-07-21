@@ -6,12 +6,13 @@ from .component import Component
 
 class CompilerOptions:
 
-    def __init__(self, compiler, flags):
+    def __init__(self, compiler, flags, args=""):
         self.compiler = compiler
         self.flags = flags
+        self.args = args
 
     def __str__(self):
-        return f"{self.compiler}, {self.flags}"
+        return f"{self.compiler}, {self.flags}, {self.args}"
 
     def __repr__(self):
         return f"CompilerOptions({self})"
@@ -32,14 +33,19 @@ class OptionsEditor(Component):
         self.flags_input = QLineEdit()
         self.addWidgets(QLabel("Flags: "), self.flags_input)
 
+        self.args_input = QLineEdit()
+        self.addWidgets(QLabel("Args: "), self.args_input)
+
     def load_options(self, options):
         self.compiler_input.setText(options.compiler)
         self.flags_input.setText(options.flags)
+        self.args_input.setText(options.args)
     
     def get_options(self): 
         return CompilerOptions(
             self.compiler_input.text(),
-            self.flags_input.text()
+            self.flags_input.text(),
+            self.args.text()
         )
 
 class FileProtocol:
@@ -61,13 +67,13 @@ class SimpleFileProtocol(FileProtocol):
         data = []
         with open(filepath) as f:
             line = None
-            while len(data) < 2 and line != '':
+            while len(data) < 3 and line != '':
                 data += [ f.readline().strip() ]
         
         return CompilerOptions(*data)
 
     def options_to_file(self, options):
-        return f"{options.compiler}\n{options.flags}"
+        return f"{options.compiler}\n{options.flags}\n{options.args}"
 
 class SaveMenu(Component):
 
@@ -144,3 +150,8 @@ class CompilerTab(Tab):
         ] * 3
         preset_selector = PresetSelector(editor, presets)
         self.addComponent(preset_selector)
+
+        self.editor = editor
+
+    def get_options(self):
+        return self.editor.get_options()
