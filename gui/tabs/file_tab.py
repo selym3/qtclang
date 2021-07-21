@@ -22,17 +22,6 @@ class ProjectDetails(Component):
         project_location.clicked.connect(self.update_location)
         self.addWidgets(project_location)
 
-        ### BIN FOLDER 
-
-        self.bin = os.path.join(os.getcwd(), 'bin')
-
-        self.bin_label = QLabel(self.bin)
-        self.addWidgets(self.bin_label)
-
-        bin_location = QPushButton("Select Output Folder")
-        bin_location.clicked.connect(self.update_bin)
-        self.addWidgets(bin_location)
-
         ### PROGRAM LOCATION 
 
         self.program = None
@@ -43,6 +32,9 @@ class ProjectDetails(Component):
         program_location = QPushButton("Select Program File")
         program_location.clicked.connect(self.update_program)
         self.addWidgets(program_location)
+
+    def get_bin_location(self):
+        return os.path.join(self.location, 'bin')
 
     def update_location(self):
         loc = QFileDialog().getExistingDirectory(
@@ -78,20 +70,6 @@ class ProjectDetails(Component):
     def set_program(self, new_program):
         self.program = new_program
         self.program_label.setText(new_program)
-
-    def update_bin(self):
-        loc = QFileDialog().getExistingDirectory(
-            self,
-            'Select C/C++ Project Output Directory',
-            self.location
-        )
-
-        if loc != '':
-            print("Updating bin location", loc)
-            self.bin = loc
-            self.bin_label.setText(self.bin)
-        else:
-            print("Didn't find bin folder")
 
 class ProjectCompiler(Component):
 
