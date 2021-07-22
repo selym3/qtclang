@@ -21,7 +21,10 @@ class Window(QMainWindow):
 
         tabs = TabManager(self)
 
-        tabs.add_tab(FileTab(self))
-        tabs.add_tab(CompilerTab(self))
+        compiler_tab = CompilerTab(self)
+        file_tab = FileTab(self, compiler_tab.options)
+
+        tabs.add_tab(file_tab)
+        tabs.add_tab(compiler_tab)
 
         return tabs

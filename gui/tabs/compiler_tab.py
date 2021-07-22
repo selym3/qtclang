@@ -1,26 +1,10 @@
 from PyQt5.QtWidgets import * # QScrollArea, QGroupBox, QFormLayout, QLabel, QLineEdit, QPushButton
 from PyQt5.QtCore import *
 
+from compiler import CompilerOptions, SimpleFileProtocol, DEFAULT_OPTS
+
 from .tab import Tab
 from .component import Component
-
-class CompilerOptions:
-
-    def __init__(self, compiler, flags, args=""):
-        self.compiler = compiler
-        self.flags = flags
-        self.args = args
-
-    def __str__(self):
-        return f"{self.compiler}, {self.flags}, {self.args}"
-
-    def __repr__(self):
-        return f"CompilerOptions({self})"
-
-DEFAULT_OPTS = CompilerOptions(
-    "clang++",
-    "-O3 -std=c++17 -pthread"
-)
 
 class OptionsEditor(Component):
 
@@ -45,35 +29,8 @@ class OptionsEditor(Component):
         return CompilerOptions(
             self.compiler_input.text(),
             self.flags_input.text(),
-            self.args.text()
+            self.args_input.text()
         )
-
-class FileProtocol:
-    
-    def file_to_options(self, filepath):
-        raise NotImplementedError(f'Method to convert contents of file "{filepath}" into instance of class CompilerOptions not implemented')
-
-    def options_to_file(self, options):
-        raise NotImplementedError(f'Method to convert {repr(options)} into the contents of a file not implemented.')
-    
-    def write_options(self, filename, options):
-        with open(filename, 'w') as f:
-            new_contents = self.options_to_file(options)
-            f.write(new_contents)
-
-class SimpleFileProtocol(FileProtocol):
-
-    def file_to_options(self, filepath):
-        data = []
-        with open(filepath) as f:
-            line = None
-            while len(data) < 3 and line != '':
-                data += [ f.readline().strip() ]
-        
-        return CompilerOptions(*data)
-
-    def options_to_file(self, options):
-        return f"{options.compiler}\n{options.flags}\n{options.args}"
 
 class SaveMenu(Component):
 
@@ -151,7 +108,7 @@ class CompilerTab(Tab):
         preset_selector = PresetSelector(editor, presets)
         self.addComponent(preset_selector)
 
-        self.editor = editor
+        self.options = editor
 
-    def get_options(self):
-        return self.editor.get_options()
+    # def get_options(self):
+    #     return self.editor.get_options()

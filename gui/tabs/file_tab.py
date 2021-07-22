@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
+from compiler import Compiler, CompilerDetails
+
 import os
 
 from .tab import Tab
@@ -11,7 +13,7 @@ class ProjectDetails(Component):
     def __init__(self):
         super().__init__("Project Details")
 
-        ### PROJECT LOCATION
+        ### PROJECT LOCATION ###
 
         self.location = os.getcwd() # <-- this should be ./
 
@@ -22,9 +24,13 @@ class ProjectDetails(Component):
         project_location.clicked.connect(self.update_location)
         self.addWidgets(project_location)
 
-        ### PROGRAM LOCATION 
+        ### PROGRAM LOCATION ###
+        self.program = None 
 
-        self.program = None
+        if os.path.exists('main.cpp'):
+            self.program = os.path.abspath('main.cpp')
+        if os.path.exists('main.c'):
+            self.program = os.path.abspath('main.c')
 
         self.program_label = QLabel(str(self.program))
         self.addWidgets(self.program_label)
@@ -32,9 +38,6 @@ class ProjectDetails(Component):
         program_location = QPushButton("Select Program File")
         program_location.clicked.connect(self.update_program)
         self.addWidgets(program_location)
-
-    def get_bin_location(self):
-        return os.path.join(self.location, 'bin')
 
     def update_location(self):
         loc = QFileDialog().getExistingDirectory(
@@ -52,7 +55,7 @@ class ProjectDetails(Component):
     def set_location(self, new_location):
         self.location = new_location
         self.location_label.setText(new_location)
-
+    
     def update_program(self):
         prog, _ = QFileDialog().getOpenFileName(
             self,
@@ -71,10 +74,20 @@ class ProjectDetails(Component):
         self.program = new_program
         self.program_label.setText(new_program)
 
+    def get_details(self):
+        return CompilerDetails(
+            self.location,
+            self.program
+        )
+
 class ProjectCompiler(Component):
 
-    def __init__(self):
+    def __init__(self, options_cmp, details_cmp):
         super().__init__("Compile Project")
+
+        # Initialize references to other components
+        self.options_cmp = options_cmp 
+        self.details_cmp = details_cmp
 
         # Run button
         run_button = QPushButton("Run Program")
@@ -86,21 +99,30 @@ class ProjectCompiler(Component):
         compile_button.clicked.connect(self.compile_all)
         self.addWidgets(compile_button)
 
+    def get_compiler(self):
+        return Compiler(
+            self.options_cmp.get_options(),
+            self.details_cmp.get_details()
+        )
+
     def run_program(self): 
-        pass 
+        compiler = self.get_compiler()
+        
+        compiler.compile_program()
+        compiler.run_program()
 
     def compile_all(self):
         pass
-
-
+        # compiler = self.get_compiler()
+        # compiler.compile_program()
 
 class FileTab(Tab):
 
-    def __init__(self, parent):
+    def __init__(self, parent, options_cmp):
         super().__init__(parent, "File Manager")
 
         project_details = ProjectDetails()
         self.addComponent(project_details)
         
-        project_compiler = ProjectCompiler()
+        project_compiler = ProjectCompiler(options_cmp, project_details)
         self.addComponent(project_compiler)
