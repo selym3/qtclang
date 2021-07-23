@@ -110,6 +110,16 @@ COMPILER:
 
 '''
 
+
+def traverse(root, condition, action):
+    # generic util for recursively exploring a directory
+
+    for entry in os.scandir(root):
+        if entry.is_file() and condition(entry.path):
+            action(entry.path)
+        elif entry.is_dir():
+            traverse(entry.path, condition, action)
+
 class Compiler:
     
     def __init__(self, options, details, debug=True):
@@ -149,7 +159,14 @@ class Compiler:
         
         self._compile(program_command(), with_bin=True)
 
+    def is_source_file(self, path):
+            is_c_or_cpp = path.endswith('.cpp') or path.endswith('.c')
+            is_program = (path == self.details.program)
+            return is_c_or_cpp and not is_program
+
     def compile_source(self, path_to_source):
+        # if self.is_source_file(path_to_source):
+        #     pass
 
         def source_command():
             cmp = self.options.compiler
@@ -158,6 +175,13 @@ class Compiler:
             return f'{cmp} -c {path_to_source} -o {out}'
 
         self._compile(source_command(), with_bin=True)
+    
+    def traverse_sources(self, action):
+        traverse(
+            self.details.project, #<-- project root
+            self.is_source_file, #<-- if the file is a source file, do an action
+            action #<-- the action to do is passed in 
+        )
 
 
 

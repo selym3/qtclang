@@ -80,21 +80,30 @@ class ProjectDetails(Component):
             self.program
         )
 
-def traverse(root, condition, action):
-    for entry in os.scandir(root):
-        if entry.is_file() and condition(entry.path):
-            action(entry.path)
-        elif entry.is_dir():
-            traverse(entry.path, condition, action)
+class CompilerComponent(Component):
 
-class ProjectCompiler(Component):
+    def __init__(self, name, options_component, details_component):
+        super().__init__(name)
+
+        self.options_component = options_component
+        self.details_component = details_component
+
+    def get_options(self):
+        return self.options_component.get_options()        
+
+    def get_details(self):
+        return self.details_component.get_details()
+
+    def get_compiler(self):
+        return Compiler(
+            self.get_options(),
+            self.get_details()
+        )
+
+class ProjectCompiler(CompilerComponent):
 
     def __init__(self, options_cmp, details_cmp):
-        super().__init__("Compile Project")
-
-        # Initialize references to other components
-        self.options_cmp = options_cmp 
-        self.details_cmp = details_cmp
+        super().__init__("Compile Project", options_cmp, details_cmp)
 
         # Run button
         run_button = QPushButton("Run Program")
@@ -106,12 +115,6 @@ class ProjectCompiler(Component):
         compile_button.clicked.connect(self.compile_all)
         self.addWidgets(compile_button)
 
-    def get_compiler(self):
-        return Compiler(
-            self.options_cmp.get_options(),
-            self.details_cmp.get_details()
-        )
-
     def run_program(self): 
         compiler = self.get_compiler()
         
@@ -120,17 +123,36 @@ class ProjectCompiler(Component):
 
     def compile_all(self):
         compiler = self.get_compiler()
+        compiler.traverse_sources(compiler.compile_source)
 
-        def is_source_file(path):
-            is_c_or_cpp = path.endswith('.cpp') or path.endswith('.c')
-            is_program = (path == compiler.details.program)
-            return is_c_or_cpp and not is_program
+class FileCompiler(CompilerComponent):
+    
+    def __init__(self, options_cmp, details_cmp):
+        super().__init__("File Menu", options_cmp, details_cmp)
+        
+        refresh_btn = QPushButton("Refresh Sources")
+        refresh_btn.clicked.connect(self.refresh_sources)
+        self.addWidgets(refresh_btn)
 
-        traverse(
-            compiler.details.project,
-            is_source_file,
-            lambda path: compiler.compile_source(path)
-        )
+        self.load_files()
+    
+    def load_files(self):
+        compiler = self.get_compiler()
+        compiler.traverse_sources(self.add_source_file)
+
+    def refresh_sources(self):
+        # this is kinda hacky
+        #starting at 1 avoids teh refresh button
+        while self.form.count() > 1:
+            self.form.removeRow(1)
+
+        self.load_files()
+
+    def add_source_file(self, path):
+        source_btn = QPushButton(f"Compile {os.path.basename(path)}")
+        source_btn.clicked.connect(lambda: self.get_compiler().compile_source(path))
+        self.addWidgets(source_btn)
+
 
 class FileTab(Tab):
 
@@ -142,3 +164,6 @@ class FileTab(Tab):
         
         project_compiler = ProjectCompiler(options_cmp, project_details)
         self.addComponent(project_compiler)
+
+        file_compiler = FileCompiler(options_cmp, project_details)
+        self.addComponent(file_compiler)
