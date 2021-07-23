@@ -94,6 +94,12 @@ class CompilerDetails:
 
         return os.path.join(self.bin, prog_name)
 
+    def get_source(self, path_to_source):
+        name = os.path.basename(path_to_source)
+        name = name.replace('.cpp', '.o').replace('.c', '.o')
+
+        return os.path.join(self.bin, name)
+
 '''
 
 COMPILER:
@@ -116,27 +122,42 @@ class Compiler:
         if self.debug:
             print(text)
 
+    def _compile(self, command, with_bin=True):
+
+        if with_bin:
+            self.details.create_bin()
+        
+        self.log(command)
+        os.system(command)
+
     def run_program(self):
         to_exec = self.details.get_executable() + ' ' + self.options.args
-        self.log(to_exec)
-
-        os.system(to_exec)
+        self._compile(to_exec, with_bin=False)
 
     def compile_program(self):
 
         def program_command():
-            cmp = self.options.compiler
+            cmp = self.options.compiler 
             flg = self.options.flags
 
             prg = self.details.program
             exe = self.details.get_executable()
 
-            return f'{cmp} {flg} {prg} -o {exe}'
+            bnf = os.path.join(self.details.bin, '*.o')
 
-        self.details.create_bin()
+            return f'{cmp} {flg} {bnf} {prg} -o {exe}'
+        
+        self._compile(program_command(), with_bin=True)
 
-        to_exec = program_command()
-        self.log(to_exec)
+    def compile_source(self, path_to_source):
 
-        os.system(to_exec)
+        def source_command():
+            cmp = self.options.compiler
+            out = self.details.get_source(path_to_source)
+
+            return f'{cmp} -c {path_to_source} -o {out}'
+
+        self._compile(source_command(), with_bin=True)
+
+
 

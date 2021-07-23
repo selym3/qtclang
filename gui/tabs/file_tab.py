@@ -80,6 +80,13 @@ class ProjectDetails(Component):
             self.program
         )
 
+def traverse(root, condition, action):
+    for entry in os.scandir(root):
+        if entry.is_file() and condition(entry.path):
+            action(entry.path)
+        elif entry.is_dir():
+            traverse(entry.path, condition, action)
+
 class ProjectCompiler(Component):
 
     def __init__(self, options_cmp, details_cmp):
@@ -112,9 +119,18 @@ class ProjectCompiler(Component):
         compiler.run_program()
 
     def compile_all(self):
-        pass
-        # compiler = self.get_compiler()
-        # compiler.compile_program()
+        compiler = self.get_compiler()
+
+        def is_source_file(path):
+            is_c_or_cpp = path.endswith('.cpp') or path.endswith('.c')
+            is_program = (path == compiler.details.program)
+            return is_c_or_cpp and not is_program
+
+        traverse(
+            compiler.details.project,
+            is_source_file,
+            lambda path: compiler.compile_source(path)
+        )
 
 class FileTab(Tab):
 
