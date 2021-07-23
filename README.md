@@ -1,6 +1,6 @@
 # qtclang
 
-Small PyQt GUI for C/C++ applications
+Simple build-tool for C/C++ projects written with python and Qt
 
 ## Todo
 
