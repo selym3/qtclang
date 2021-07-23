@@ -1,7 +1,12 @@
 #include <iostream>
+#include "include/hello.hpp"
+#include "include/world.hpp"
+#include "include/sub/test.hpp"
 
 int main(void)
 {
-    std::cout << "Hello world!\n";
+    hello();
+    world();
+    test();
     return 0;
 }
