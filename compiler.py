@@ -13,20 +13,23 @@ COMPILER OPTIONS:
 
 class CompilerOptions:
     
-    def __init__(self, compiler, flags, args=""):
-        self.compiler = compiler
-        self.flags = flags
-        self.args = args
+    def __init__(self, compiler, flags, silenced, args=""):
+        self.compiler = str(compiler)
+        self.flags = str(flags)
+        self.silenced = bool(silenced)
+        self.args = str(args)
 
     def __str__(self):
-        return f"{self.compiler}, {self.flags}, {self.args}"
+        return f"{self.compiler}, {self.flags}, {self.silenced}, {self.args}"
 
     def __repr__(self):
         return f"CompilerOptions({self})"
 
 DEFAULT_OPTS = CompilerOptions(
     "clang++",
-    "-O3 -std=c++17 -pthread"
+    "-O3 -std=c++17 -pthread",
+    False,
+    ""
 )
 
 '''
@@ -54,16 +57,21 @@ class FileProtocol:
 class SimpleFileProtocol(FileProtocol):
 
     def file_to_options(self, filepath):
+        compiler_options = 4
         data = []
         with open(filepath) as f:
-            line = None
-            while len(data) < 3 and line != '':
+            # this can break with an invalid file trying to be loaded
+            # that is smaller than 4 lines
+            while len(data) < compiler_options:
                 data += [ f.readline().strip() ]
         
         return CompilerOptions(*data)
 
     def options_to_file(self, options):
-        return f"{options.compiler}\n{options.flags}\n{options.args}"
+        # when passed into bool(...) this converts properly
+        is_silenced = 'Silenced' if options.silenced else ''
+        
+        return f"{options.compiler}\n{options.flags}\n{is_silenced}\n{options.args}"
 
 '''
 
@@ -86,19 +94,28 @@ class CompilerDetails:
         self.program = program
 
     def create_bin(self):
+        # creates the bin folder
         Path(self.bin).mkdir(parents=True, exist_ok=True)
 
-    def get_executable(self):
-        prog_name = os.path.basename(self.program)
-        prog_name = prog_name.replace('.cpp','').replace('.c','')
+    def to_bin(self, path, extension):
+        # moves a file specified at the path to the bin folder
+        name = os.path.basename(path)
+        
+        # cpp must come first cause it's more complex and overlaps with 
+        # the other one
+        name = name\
+            .replace('.cpp', extension) \
+            .replace('.c', extension)
+        
+        return os.path.join(self.bin, name)
 
-        return os.path.join(self.bin, prog_name)
+    def get_executable(self):
+        # converts the program file into the executable
+        return self.to_bin(self.program, extension='')
 
     def get_source(self, path_to_source):
-        name = os.path.basename(path_to_source)
-        name = name.replace('.cpp', '.o').replace('.c', '.o')
-
-        return os.path.join(self.bin, name)
+        #c converts the source file into object file 
+        return self.to_bin(path_to_source, extension='.o')
 
 '''
 
@@ -122,14 +139,12 @@ def traverse(root, condition, action):
 
 class Compiler:
     
-    def __init__(self, options, details, debug=True):
+    def __init__(self, options, details):
         self.options = options
         self.details = details
 
-        self.debug = debug
-
     def log(self, text):
-        if self.debug:
+        if not self.options.silenced:
             print(text)
 
     def _compile(self, command, with_bin=True):
@@ -146,6 +161,12 @@ class Compiler:
 
     def compile_program(self):
 
+        def bin_has_sources():
+            for fd in os.scandir(self.details.bin):
+                if fd.is_file() and fd.path.endswith('.o'):
+                    return True
+            return False
+
         def program_command():
             cmp = self.options.compiler 
             flg = self.options.flags
@@ -153,16 +174,19 @@ class Compiler:
             prg = self.details.program
             exe = self.details.get_executable()
 
-            bnf = os.path.join(self.details.bin, '*.o')
+            if bin_has_sources():
+                bnf = os.path.join(self.details.bin, '*.o')
+            else:
+                bnf = ''
 
             return f'{cmp} {flg} {bnf} {prg} -o {exe}'
         
         self._compile(program_command(), with_bin=True)
 
     def is_source_file(self, path):
-            is_c_or_cpp = path.endswith('.cpp') or path.endswith('.c')
-            is_program = (path == self.details.program)
-            return is_c_or_cpp and not is_program
+        is_c_or_cpp = path.endswith('.cpp') or path.endswith('.c')
+        is_program = (path == self.details.program)
+        return is_c_or_cpp and not is_program
 
     def compile_source(self, path_to_source):
         # if self.is_source_file(path_to_source):

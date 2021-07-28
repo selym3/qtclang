@@ -20,15 +20,20 @@ class OptionsEditor(Component):
         self.args_input = QLineEdit()
         self.addWidgets(QLabel("Args: "), self.args_input)
 
+        self.debug_toggle = QCheckBox("Silence Compiler Output?")
+        self.addWidgets(self.debug_toggle)
+
     def load_options(self, options):
         self.compiler_input.setText(options.compiler)
         self.flags_input.setText(options.flags)
+        self.debug_toggle.setChecked(options.silenced)
         self.args_input.setText(options.args)
     
     def get_options(self): 
         return CompilerOptions(
             self.compiler_input.text(),
             self.flags_input.text(),
+            self.debug_toggle.isChecked(),
             self.args_input.text()
         )
 
