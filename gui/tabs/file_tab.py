@@ -56,10 +56,15 @@ class ProjectDetails(Component):
         self.location = new_location
         self.location_label.setText(new_location)
     
-    def update_program(self):
+    def update_program(self, was_missing=False):
+        if was_missing:
+            dialog_name = 'C/C++ program is missing, please select'
+        else:
+            dialog_name = 'Select C/C++ program file'
+
         prog, _ = QFileDialog().getOpenFileName(
             self,
-            'Select C/C++ program file',
+            dialog_name,
             self.location,
             'C/C++ application (*.c, *.cpp)'
         )
@@ -116,10 +121,15 @@ class ProjectCompiler(CompilerComponent):
         self.addWidgets(compile_button)
 
     def run_program(self): 
-        compiler = self.get_compiler()
-        
-        compiler.compile_program()
-        compiler.run_program()
+        try:
+            compiler = self.get_compiler()
+
+            compiler.compile_program()
+            compiler.run_program()
+        # except InvalidCompilerState as e:
+        except ValueError as e:
+            self.details_component.update_program(was_missing=True)
+
 
     def compile_all(self):
         compiler = self.get_compiler()
@@ -141,8 +151,8 @@ class FileCompiler(CompilerComponent):
         compiler.traverse_sources(self.add_source_file)
 
     def refresh_sources(self):
-        # this is kinda hacky
-        #starting at 1 avoids teh refresh button
+        # - this is kinda hacky
+        # - starting at 1 avoids teh refresh button
         while self.form.count() > 1:
             self.form.removeRow(1)
 

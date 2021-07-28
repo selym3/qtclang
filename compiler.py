@@ -96,8 +96,6 @@ class CompilerDetails:
         self.project = project
         self.bin = os.path. join(project, 'bin')
 
-        if program is None: #Handle this better
-            raise ValueError('Program file location is in invalid state')
         self.program = program
 
     def create_bin(self):
@@ -117,6 +115,9 @@ class CompilerDetails:
         return os.path.join(self.bin, name)
 
     def get_executable(self):
+        if self.program is None: #Handle this better
+            raise ValueError('Program file location is in invalid state')
+        
         # converts the program file into the executable
         return self.to_bin(self.program, extension='')
 
