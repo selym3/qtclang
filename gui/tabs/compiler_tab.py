@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import * # QScrollArea, QGroupBox, QFormLayout, QLabel, QLineEdit, QPushButton
 from PyQt5.QtCore import *
 
-from compiler import CompilerOptions, SimpleFileProtocol, DEFAULT_OPTS
+import os
+
+from compiler import CompilerOptions, DEBUG_OPTS, SimpleFileProtocol, traverse, DEFAULT_OPTS
 
 from .tab import Tab
 from .component import Component
@@ -39,11 +41,11 @@ class OptionsEditor(Component):
 
 class SaveMenu(Component):
 
-    def __init__(self, editor):
+    def __init__(self, editor, file_converter):
         super().__init__("Save / Load")
         self.editor = editor
 
-        self.file_converter = SimpleFileProtocol()
+        self.file_converter = file_converter
 
         load_file = QPushButton("Load Configuration")
         load_file.clicked.connect(self.load_save_file)
@@ -86,14 +88,36 @@ class SaveMenu(Component):
 
 class PresetSelector(Component):
 
-    def __init__(self, editor, presets):
+    def __init__(self, editor, presets, file_converter):
         super().__init__("Presets")
 
-        for name, compiler_opts in presets:
-            button = QPushButton(name)
-            button.clicked.connect(lambda: editor.load_options(compiler_opts))
+        self.editor = editor
+        self.file_converter = file_converter
 
-            self.addWidgets(button)
+        for name, compiler_opts in presets:
+            self.add_preset(name, compiler_opts)
+
+        traverse(
+            # this should technically be from the project directory
+            # but they dont know about each other
+            os.getcwd(), 
+            
+            lambda path: path.endswith('.qtclang'),
+            self.load_preset
+        )
+
+    def load_preset(self, path):
+        options = self.file_converter.file_to_options(path)
+        path = os.path.basename(path)
+
+        self.add_preset(path, options)
+
+    def add_preset(self, name, opts):
+        button = QPushButton(name)
+        button.clicked.connect(lambda: self.editor.load_options(opts))
+
+        self.addWidgets(button)
+        
 
 class CompilerTab(Tab):
 
@@ -104,13 +128,15 @@ class CompilerTab(Tab):
         editor.load_options(DEFAULT_OPTS)
         self.addComponent(editor)
 
-        save_menu = SaveMenu(editor)
+        file_converter = SimpleFileProtocol()
+        save_menu = SaveMenu(editor, file_converter)
         self.addComponent(save_menu)
 
         presets = [
             ("Default", DEFAULT_OPTS),
-        ] * 3
-        preset_selector = PresetSelector(editor, presets)
+            ("Debug", DEBUG_OPTS)
+        ]
+        preset_selector = PresetSelector(editor, presets, file_converter)
         self.addComponent(preset_selector)
 
         self.options = editor

@@ -28,6 +28,13 @@ class CompilerOptions:
 DEFAULT_OPTS = CompilerOptions(
     "clang++",
     "-O3 -std=c++17 -pthread",
+    True,
+    ""
+)
+
+DEBUG_OPTS = CompilerOptions(
+    "gcc -g",
+    "-lm -pthread",
     False,
     ""
 )
