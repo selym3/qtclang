@@ -170,10 +170,13 @@ class Compiler:
     def compile_program(self):
 
         def bin_has_sources():
-            for fd in os.scandir(self.details.bin):
-                if fd.is_file() and fd.path.endswith('.o'):
-                    return True
-            return False
+            try:
+                for fd in os.scandir(self.details.bin):
+                    if fd.is_file() and fd.path.endswith('.o'):
+                        return True
+                return False
+            except FileNotFoundError:
+                return False
 
         def program_command():
             cmp = self.options.compiler 
